@@ -35,7 +35,7 @@ export default function SelectField({
                 value={value}
                 onChange={onChange}
                 disabled={disabled}
-                className={`w-full px-4 py-2 border rounded shadow-sm appearance-none ${
+                className={`w-full px-4 py-2 border rounded shadow-sm h-[42px] ${
                     disabled ? 'bg-gray-100 text-gray-500 cursor-not-allowed' : ''
                 }`}
             >

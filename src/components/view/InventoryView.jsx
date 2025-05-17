@@ -47,11 +47,6 @@ export default function InventoryView() {
     };
 
     const filteredItems = items.filter(item => {
-        const expirationDate = item.expirations?.[0]?.expirationDate;
-        const date = expirationDate ? new Date(expirationDate) : null;
-        const now = new Date();
-        const soon = new Date(now.getTime() + 7 * 24 * 60 * 60 * 1000);
-
         const storageMatch =
             selectedStorageId === 'ALL' ||
             item.storage?.id === parseInt(selectedStorageId);
@@ -59,8 +54,8 @@ export default function InventoryView() {
             selectedCommunityId === 'ALL' ||
             getStoragesForSelectedCommunity().some(s => s.id === item.storage?.id);
 
-        const expiredMatch = !showOnlyExpired || (date && date < now);
-        const soonMatch = !showOnlyExpiringSoon || (date && date > now && date <= soon);
+        const expiredMatch = !showOnlyExpired || item.expirationStatus === 'EXPIRED';
+        const soonMatch = !showOnlyExpiringSoon || item.expirationStatus === 'WARNING';
 
         return storageMatch && communityMatch && expiredMatch && soonMatch;
     });
@@ -79,27 +74,28 @@ export default function InventoryView() {
 
     const stats = {
         total: filteredItems.length,
-        expired: filteredItems.filter(i => i.expirations?.[0] && new Date(i.expirations[0].expirationDate) < new Date()).length,
-        soon: filteredItems.filter(i => {
-            const d = i.expirations?.[0]?.expirationDate;
-            if (!d) return false;
-            const date = new Date(d);
-            const now = new Date();
-            const in7 = new Date(now.getTime() + 7 * 24 * 60 * 60 * 1000);
-            return date > now && date < in7;
-        }).length,
+        expired: filteredItems.filter(i => i.expirationStatus === 'EXPIRED').length,
+        soon: filteredItems.filter(i => i.expirationStatus === 'WARNING').length,
     };
 
-    const handleChangeStorage = async (itemId, newStorageId) => {
+    const handleChangeStorage = async (item, newStorageId) => {
+        const updatedItem = {
+            ...item,
+            storageId: newStorageId
+        };
+
         try {
-            await authFetch(`/api/items/${itemId}/storage`, {
+            console.log('[UPDATE ITEM]', updatedItem);
+
+            await authFetch(`/api/item/${item.id}`, {
                 method: 'PUT',
                 headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify({ storageId: newStorageId })
+                body: JSON.stringify(updatedItem)
             });
+
             reloadItems();
         } catch (err) {
-            console.error('Fehler beim Aktualisieren des Lagers:', err);
+            console.error('Fehler beim Aktualisieren des Items:', err);
         }
     };
 
@@ -148,7 +144,12 @@ export default function InventoryView() {
                     items={sortedItems}
                     onSelectItem={setActiveItem}
                     getStoragesOfItemCommunity={getStoragesOfItemCommunity}
-                    onChangeStorage={handleChangeStorage}
+                    onChangeStorage={(itemId, newStorageId) => {
+                        const item = items.find(i => i.id === parseInt(itemId));
+                        if (item) {
+                            handleChangeStorage(item, newStorageId);
+                        }
+                    }}
                     onAction={handleAction}
                 />
             </div>

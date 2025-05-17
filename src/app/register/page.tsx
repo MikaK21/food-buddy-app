@@ -6,6 +6,7 @@ import AuthLayout from '@/components/ui/auth/AuthLayout';
 import InputField from '@/components/ui/auth/InputField';
 import SubmitButton from '@/components/ui/auth/SubmitButton';
 import AuthSwitchLink from '@/components/ui/auth/AuthSwitchLink';
+import UnprotectedRoute from "@/app/UnprotectedRoute";
 
 export default function RegisterPage() {
     const [formData, setFormData] = useState({
@@ -51,31 +52,33 @@ export default function RegisterPage() {
     };
 
     return (
-        <AuthLayout>
-            <div className="flex flex-col items-center mb-6">
-                <div className="h-20 w-20 mb-4 bg-gray-200 rounded-full flex items-center justify-center text-2xl font-bold text-gray-600">
-                    🥗
-                </div>
-                <h1 className="text-3xl font-bold text-gray-800">Registrieren</h1>
-                <p className="text-gray-500">Erstelle dein FoodBuddy-Konto</p>
-            </div>
-
-            <form onSubmit={handleSubmit} className="space-y-4">
-                <InputField type="text" name="username" placeholder="Benutzername" value={formData.username} onChange={handleChange} />
-                <InputField type="email" name="email" placeholder="E-Mail" value={formData.email} onChange={handleChange} />
-                <InputField type="password" name="password" placeholder="Passwort" value={formData.password} onChange={handleChange} />
-                <InputField type="password" name="confirm_password" placeholder="Passwort bestätigen" value={formData.confirm_password} onChange={handleChange} />
-                <SubmitButton label="Registrieren" />
-                <AuthSwitchLink text="Schon registriert?" linkText="Zum Login" href="/login" />
-            </form>
-
-            {errorMessage && (
-                <div className="mt-4 w-full">
-                    <div className="w-full p-3 rounded-lg bg-red-100 border border-red-400 text-red-700 text-sm text-center">
-                        <strong className="font-semibold">Fehler:</strong> {errorMessage}
+        <UnprotectedRoute>
+            <AuthLayout>
+                <div className="flex flex-col items-center mb-6">
+                    <div className="h-20 w-20 mb-4 bg-gray-200 rounded-full flex items-center justify-center text-2xl font-bold text-gray-600">
+                        🥗
                     </div>
+                    <h1 className="text-3xl font-bold text-gray-800">Registrieren</h1>
+                    <p className="text-gray-500">Erstelle dein FoodBuddy-Konto</p>
                 </div>
-            )}
-        </AuthLayout>
+
+                <form onSubmit={handleSubmit} className="space-y-4">
+                    <InputField type="text" name="username" placeholder="Benutzername" value={formData.username} onChange={handleChange} />
+                    <InputField type="email" name="email" placeholder="E-Mail" value={formData.email} onChange={handleChange} />
+                    <InputField type="password" name="password" placeholder="Passwort" value={formData.password} onChange={handleChange} />
+                    <InputField type="password" name="confirm_password" placeholder="Passwort bestätigen" value={formData.confirm_password} onChange={handleChange} />
+                    <SubmitButton label="Registrieren" />
+                    <AuthSwitchLink text="Schon registriert?" linkText="Zum Login" href="/login" />
+                </form>
+
+                {errorMessage && (
+                    <div className="mt-4 w-full">
+                        <div className="w-full p-3 rounded-lg bg-red-100 border border-red-400 text-red-700 text-sm text-center">
+                            <strong className="font-semibold">Fehler:</strong> {errorMessage}
+                        </div>
+                    </div>
+                )}
+            </AuthLayout>
+        </UnprotectedRoute>
     );
 }

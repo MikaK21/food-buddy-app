@@ -1,7 +1,12 @@
 'use client'
 
 import CommunityMemberView from "@/components/view/CommunityMemberView";
+import ProtectedRoute from "@/app/ProtectedRoute";
 
 export default function Page() {
-    return <CommunityMemberView />
+    return (
+        <ProtectedRoute>
+            <CommunityMemberView />
+        </ProtectedRoute>
+    )
 }

@@ -1,12 +1,13 @@
 'use client'
 
-import StorageManageView from "@/components/view/StorageManageView";
 import ProtectedRoute from "@/app/ProtectedRoute";
+import ItemDetailView from "@/components/view/ItemDetailView";
 
 export default function Page() {
+
     return (
         <ProtectedRoute>
-            <StorageManageView />
+            <ItemDetailView />
         </ProtectedRoute>
     )
 }
