@@ -1,3 +1,4 @@
+// InventoryView.tsx
 'use client';
 
 import { useEffect, useState } from 'react';
@@ -24,13 +25,21 @@ export default function InventoryView() {
         authFetch('/api/community/my')
             .then(res => res.json())
             .then(setCommunities);
-        reloadItems();
-    }, []);
 
-    const reloadItems = () => {
         authFetch('/api/item')
             .then(res => res.json())
-            .then(setItems);
+            .then(data => setItems(enhanceItems(data)));
+    }, []);
+
+    const enhanceItems = (items) => {
+        return items.map(item => {
+            const expirations = [...(item.expirations || [])].sort((a, b) => new Date(a.expirationDate) - new Date(b.expirationDate));
+            return {
+                ...item,
+                expirations,
+                primaryExpiration: expirations[0] || null,
+            };
+        });
     };
 
     const getStoragesForSelectedCommunity = () => {
@@ -47,15 +56,11 @@ export default function InventoryView() {
     };
 
     const filteredItems = items.filter(item => {
-        const storageMatch =
-            selectedStorageId === 'ALL' ||
-            item.storage?.id === parseInt(selectedStorageId);
-        const communityMatch =
-            selectedCommunityId === 'ALL' ||
-            getStoragesForSelectedCommunity().some(s => s.id === item.storage?.id);
-
-        const expiredMatch = !showOnlyExpired || item.expirationStatus === 'EXPIRED';
-        const soonMatch = !showOnlyExpiringSoon || item.expirationStatus === 'WARNING';
+        const status = item.primaryExpiration?.status;
+        const storageMatch = selectedStorageId === 'ALL' || item.storage?.id === parseInt(selectedStorageId);
+        const communityMatch = selectedCommunityId === 'ALL' || getStoragesForSelectedCommunity().some(s => s.id === item.storage?.id);
+        const expiredMatch = !showOnlyExpired || status === 'EXPIRED';
+        const soonMatch = !showOnlyExpiringSoon || status === 'WARNING';
 
         return storageMatch && communityMatch && expiredMatch && soonMatch;
     });
@@ -64,8 +69,8 @@ export default function InventoryView() {
         let valA = a[sortBy];
         let valB = b[sortBy];
         if (sortBy === 'expirationDate') {
-            valA = new Date(a.expirations?.[0]?.expirationDate || 0);
-            valB = new Date(b.expirations?.[0]?.expirationDate || 0);
+            valA = new Date(a.primaryExpiration?.expirationDate || 0);
+            valB = new Date(b.primaryExpiration?.expirationDate || 0);
         }
         if (valA < valB) return sortOrder === 'asc' ? -1 : 1;
         if (valA > valB) return sortOrder === 'asc' ? 1 : -1;
@@ -74,8 +79,8 @@ export default function InventoryView() {
 
     const stats = {
         total: filteredItems.length,
-        expired: filteredItems.filter(i => i.expirationStatus === 'EXPIRED').length,
-        soon: filteredItems.filter(i => i.expirationStatus === 'WARNING').length,
+        expired: filteredItems.filter(i => i.primaryExpiration?.status === 'EXPIRED').length,
+        soon: filteredItems.filter(i => i.primaryExpiration?.status === 'WARNING').length,
     };
 
     const handleChangeStorage = async (item, newStorageId) => {
@@ -85,23 +90,22 @@ export default function InventoryView() {
         };
 
         try {
-            console.log('[UPDATE ITEM]', updatedItem);
-
             await authFetch(`/api/item/${item.id}`, {
                 method: 'PUT',
                 headers: { 'Content-Type': 'application/json' },
                 body: JSON.stringify(updatedItem)
             });
-
-            reloadItems();
+            authFetch('/api/item')
+                .then(res => res.json())
+                .then(data => setItems(enhanceItems(data)));
         } catch (err) {
             console.error('Fehler beim Aktualisieren des Items:', err);
         }
     };
 
-    const handleAction = async (itemId, action) => {
+    const handleAction = async (itemId, action, expiration) => {
         try {
-            console.log(`${action}: Item ${itemId}`);
+            console.log(`${action}: Item ${itemId} / Exp ${expiration?.expirationDate}`);
             // await authFetch(`/api/item/${itemId}/${action}`, { method: 'POST' });
             // reloadItems();
         } catch (err) {
@@ -110,7 +114,7 @@ export default function InventoryView() {
     };
 
     if (activeItem) {
-        return <ItemDetailView item={activeItem} onBack={() => setActiveItem(null)} reload={reloadItems} />;
+        return <ItemDetailView item={activeItem} onBack={() => setActiveItem(null)} reload={() => {}} />;
     }
 
     return (

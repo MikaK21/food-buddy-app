@@ -2,6 +2,7 @@
 
 import { useRouter } from 'next/navigation';
 import { useState } from 'react';
+import { ChevronDown, ChevronUp } from 'lucide-react';
 
 export default function InventoryTableRow({
                                               item,
@@ -28,6 +29,7 @@ export default function InventoryTableRow({
         return date.toLocaleDateString('de-DE');
     };
 
+    const primary = item.primaryExpiration;
     const expirations = item.expirations ?? [];
     const totalAmount = expirations.reduce((sum, exp) => sum + (exp.amount || 0), 0);
     const multipleExpirations = expirations.length > 1;
@@ -39,7 +41,6 @@ export default function InventoryTableRow({
 
     return (
         <>
-            {/* Hauptzeile */}
             <tr className={`border-t ${index % 2 === 1 ? 'bg-gray-50' : ''} hover:bg-green-100`}>
                 <td
                     className="w-[20%] px-4 py-2 text-black font-medium text-left cursor-pointer"
@@ -48,10 +49,10 @@ export default function InventoryTableRow({
                     {item.name}
                 </td>
                 <td className="w-[15%] px-4 py-2 text-center">
-                    {formatDateGerman(expirations[0]?.expirationDate)}
+                    {formatDateGerman(primary?.expirationDate)}
                 </td>
                 <td className="w-[10%] px-4 py-2 text-center">
-                    <span className={`inline-block w-4 h-4 rounded-full ${getStatusColor(item.expirationStatus)}`}></span>
+                    <span className={`inline-block w-4 h-4 rounded-full ${getStatusColor(primary?.status)}`}></span>
                 </td>
                 <td className="w-[20%] px-4 py-2 text-center cursor-default" onClick={(e) => e.stopPropagation()}>
                     <select
@@ -67,22 +68,34 @@ export default function InventoryTableRow({
                 <td className="w-[10%] px-4 py-2 text-center">{totalAmount}</td>
                 <td className="w-[25%] px-4 py-2 text-center">
                     {multipleExpirations ? (
-                        <button
-                            className="text-sm text-blue-600 hover:underline"
-                            onClick={toggleExpanded}
-                        >
-                            {expanded ? '▼' : '⬇️ Aufklappen'}
-                        </button>
-                    ) : (
-                        <div className="flex justify-end gap-2">
+                        <div className="flex justify-center items-center">
                             <button
-                                onClick={() => onAction(item.id, 'consume', expirations[0])}
+                                className="flex items-center gap-1 text-gray-600 hover:text-gray-800 cursor-pointer"
+                                onClick={toggleExpanded}
+                            >
+                                {expanded ? (
+                                    <>
+                                        <ChevronUp className="w-4 h-4" />
+                                        <span>Einklappen</span>
+                                    </>
+                                ) : (
+                                    <>
+                                        <ChevronDown className="w-4 h-4" />
+                                        <span>Aufklappen</span>
+                                    </>
+                                )}
+                            </button>
+                        </div>
+                    ) : (
+                        <div className="flex justify-center gap-2">
+                            <button
+                                onClick={() => onAction(item.id, 'consume', primary)}
                                 className="bg-green-500 text-white px-2 py-1 rounded hover:bg-green-600 text-sm"
                             >
                                 🍽️ Gegessen
                             </button>
                             <button
-                                onClick={() => onAction(item.id, 'discard', expirations[0])}
+                                onClick={() => onAction(item.id, 'discard', primary)}
                                 className="bg-red-500 text-white px-2 py-1 rounded hover:bg-red-700 text-sm"
                             >
                                 🗑️ Weggeworfen
@@ -92,21 +105,22 @@ export default function InventoryTableRow({
                 </td>
             </tr>
 
-            {/* Unterzeilen bei mehreren Ablaufdaten */}
             {expanded && multipleExpirations && expirations.map((exp, i) => (
                 <tr
                     key={i}
-                    className={`text-sm border-t ${index % 2 === 1 ? 'bg-gray-50' : ''}`}
+                    className="text-sm border-t border-gray-200 bg-white"
                 >
-                    <td className="w-[20%] px-4 py-2"></td>
+                    <td className="w-[20%] px-4 py-2 text-left text-gray-400 pl-6">•</td>
                     <td className="w-[15%] px-4 py-2 text-center text-gray-700">
                         {formatDateGerman(exp.expirationDate)}
                     </td>
-                    <td className="w-[10%] px-4 py-2"></td>
+                    <td className="w-[10%] px-4 py-2 text-center">
+                        <span className={`inline-block w-3 h-3 rounded-full ${getStatusColor(exp.status)}`}></span>
+                    </td>
                     <td className="w-[20%] px-4 py-2"></td>
                     <td className="w-[10%] px-4 py-2 text-center">{exp.amount}</td>
                     <td className="w-[25%] px-4 py-2 text-center">
-                        <div className="flex justify-end gap-2">
+                        <div className="flex justify-center gap-2">
                             <button
                                 onClick={() => onAction(item.id, 'consume', exp)}
                                 className="bg-green-500 text-white px-2 py-1 rounded hover:bg-green-600 text-sm"
