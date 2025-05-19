@@ -1,3 +1,5 @@
+'use client'
+
 import CommunityMemberList from "@/components/ui/CommunityMemberList";
 import { useSearchParams } from 'next/navigation';
 import { useEffect, useState } from 'react';

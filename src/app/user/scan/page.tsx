@@ -1,13 +1,12 @@
 'use client'
 
-
-import ShopsManageView from "@/components/view/ShopsManageView";
 import ProtectedRoute from "@/app/ProtectedRoute";
+import ProductAddView from "@/components/view/ProductAddView";
 
 export default function Page() {
     return (
         <ProtectedRoute>
-            <ShopsManageView />
+            <ProductAddView />
         </ProtectedRoute>
     )
 }

@@ -1,9 +1,10 @@
 'use client';
 
-import React, { useState, useEffect } from 'react';
+import React from 'react';
 import FormField from '@/components/ui/interaction/FormField';
 import QuantityWithUnit from '@/components/ui/interaction/QuantityWithUnit';
 import SelectField from '@/components/ui/interaction/SelectField';
+import SpinnerIcon from '@/components/SpinnerIcon';
 
 export default function ProductFormSection({
                                                formData,
@@ -11,22 +12,24 @@ export default function ProductFormSection({
                                                storages,
                                                communities,
                                                readOnly = false,
+                                               mhdButtonStates = {},
+                                               onTriggerScan = () => {}
                                            }) {
-    const [expirations, setExpirations] = useState(formData.expirations || []);
-
-    useEffect(() => {
-        onChange('expirations', expirations);
-    }, [expirations]);
+    const expirations = formData.expirations ?? [];
 
     const updateExpiration = (index, key, value) => {
         const updated = expirations.map((e, i) =>
             i === index ? { ...e, [key]: value } : e
         );
-        setExpirations(updated);
+        onChange('expirations', updated);
     };
 
     const addExpiration = () => {
-        setExpirations([...expirations, { expirationDate: '', amount: '' }]);
+        onChange('expirations', [...expirations, { expirationDate: '', amount: '1' }]);
+    };
+
+    const removeExpiration = (index) => {
+        onChange('expirations', expirations.filter((_, i) => i !== index));
     };
 
     const getValue = (name) => formData[name] ?? '';
@@ -61,7 +64,6 @@ export default function ProductFormSection({
                     readOnly={readOnly}
                 />
 
-                {/* Kategorie & Produktgruppe nebeneinander */}
                 <div className="grid grid-cols-2 gap-4">
                     <SelectField
                         label="Kategorie"
@@ -84,13 +86,13 @@ export default function ProductFormSection({
                         onChange={(e) => onChange(e.target.name, e.target.value)}
                         options={[
                             { value: '', label: '-- Produktgruppe wählen --' },
-                            { value: 'FLEISCHPRODUKT', label: 'Fleischprodukt' },
-                            { value: 'MILCHPRODUKT', label: 'Milchprodukt' },
-                            { value: 'GEMUESE', label: 'Gemüse' },
-                            { value: 'OBST', label: 'Obst' },
-                            { value: 'KONSERVE', label: 'Konserve' },
-                            { value: 'BACKWARE', label: 'Backware' },
-                            { value: 'SONSTIGES', label: 'Sonstiges' },
+                            { value: 'FLEISCHPRODUKT', label: '🥩 Fleischprodukt' },
+                            { value: 'MILCHPRODUKT', label: '🥛 Milchprodukt' },
+                            { value: 'GEMUESE', label: '🥦 Gemüse' },
+                            { value: 'OBST', label: '🍎 Obst' },
+                            { value: 'KONSERVE', label: '🥫 Konserve' },
+                            { value: 'BACKWARE', label: '🍞 Backware' },
+                            { value: 'SONSTIGES', label: '📦 Sonstiges' },
                         ]}
                         disabled={readOnly}
                     />
@@ -130,7 +132,7 @@ export default function ProductFormSection({
             <div className="mt-6 pt-4 border-t border-gray-200 md:col-span-2">
                 <h3 className="text-md font-semibold text-gray-600 mb-4">Ablaufdaten</h3>
                 {expirations.map((entry, idx) => (
-                    <div key={idx} className="grid grid-cols-1 md:grid-cols-2 gap-4 mb-2">
+                    <div key={idx} className="grid grid-cols-1 md:grid-cols-4 gap-4 mb-2 items-end">
                         <FormField
                             label="Ablaufdatum"
                             type="date"
@@ -145,6 +147,40 @@ export default function ProductFormSection({
                             onChange={(e) => updateExpiration(idx, 'amount', e.target.value)}
                             disabled={readOnly}
                         />
+                        {!readOnly ? (
+                            <button
+                                type="button"
+                                onClick={() => onTriggerScan(idx)}
+                                className="bg-green-600 text-white px-3 py-2 rounded hover:bg-green-700 w-full flex items-center justify-center gap-2 min-h-[42px]"
+                            >
+                                {mhdButtonStates[idx] === 'loading' && (
+                                    <>
+                                        <SpinnerIcon size={16} />
+                                        <span>Scannen...</span>
+                                    </>
+                                )}
+                                {mhdButtonStates[idx] === 'error' && '❌ Fehler'}
+                                {!mhdButtonStates[idx] && (
+                                    <>
+                                        <span className="text-lg">📸</span>
+                                        MHD scannen
+                                    </>
+                                )}
+                            </button>
+                        ) : (
+                            <div></div>
+                        )}
+                        {!readOnly ? (
+                            <button
+                                type="button"
+                                onClick={() => removeExpiration(idx)}
+                                className="bg-red-500 text-white px-3 py-2 rounded hover:bg-red-600 w-full"
+                            >
+                                ➖ Entfernen
+                            </button>
+                        ) : (
+                            <div></div>
+                        )}
                     </div>
                 ))}
                 {!readOnly && (

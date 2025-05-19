@@ -45,7 +45,7 @@ export default function RegisterPage() {
                 return;
             }
 
-            router.push('/user/home');
+            router.push('/login');
         } catch (error) {
             setErrorMessage('Ein Fehler ist aufgetreten. Bitte versuche es erneut.' + error);
         }

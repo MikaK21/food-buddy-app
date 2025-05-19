@@ -14,20 +14,34 @@ export default function ShoppingListView() {
     const [newItemAmount, setNewItemAmount] = useState(1);
     const [newItemShopId, setNewItemShopId] = useState('');
 
-    // Initiale Daten laden
     useEffect(() => {
-        const fetchData = async () => {
-            const listsRes = await authFetch('/api/shopping-list/my').then(res => res.json());
-            setLists(listsRes);
-            if (listsRes.length > 0) {
-                setSelectedListId(listsRes[0].id);
-            }
-
-            const shopsRes = await authFetch('/api/shop/my').then(res => res.json());
-            setShops(shopsRes);
-        };
         fetchData();
     }, []);
+
+    const fetchData = async () => {
+        const listsRes = await authFetch('/api/shopping-list/my').then(res => res.json());
+        setLists(listsRes);
+
+        if (listsRes.length > 0) {
+            setSelectedListId(listsRes[0].id);
+        }
+
+        const userShops = await authFetch('/api/shop/my').then(res => res.json());
+
+        // Alle Shops extrahieren, die in den Items verwendet wurden
+        const allShopsInItems = listsRes
+            .flatMap(list => list.items || [])
+            .map(item => item.shop)
+            .filter(shop => shop && shop.id);
+
+        // Duplikate vermeiden
+        const allShopsMap = new Map();
+        [...userShops, ...allShopsInItems].forEach(shop => {
+            allShopsMap.set(shop.id, shop);
+        });
+
+        setShops(Array.from(allShopsMap.values()));
+    };
 
     const selectedList = lists.find(l => l.id === selectedListId);
 
@@ -87,10 +101,16 @@ export default function ShoppingListView() {
 
             {/* Liste auswählen */}
             <Select
+                label="Shopping List"
                 value={selectedListId || ''}
                 onChange={e => setSelectedListId(Number(e.target.value))}
-                options={lists.map(list => ({ value: list.id, label: list.name }))}
+                options={
+                    lists.length > 0
+                        ? lists.map(list => ({ value: list.id, label: list.name }))
+                        : [{ value: '', label: 'Keine Shopping List vorhanden' }]
+                }
             />
+
 
             {/* Neues Item hinzufügen */}
             <div className="flex gap-2 mt-4">
@@ -105,7 +125,7 @@ export default function ShoppingListView() {
                 <select
                     value={newItemAmount}
                     onChange={e => setNewItemAmount(Number(e.target.value))}
-                    className="flex-1 px-4 py-2 border border-gray-300 rounded shadow-sm bg-white focus:outline-none focus:ring-2 focus:ring-green-300"
+                    className="w-20 px-4 py-2 border border-gray-300 rounded shadow-sm bg-white focus:outline-none focus:ring-2 focus:ring-green-300"
                 >
                     {Array.from({ length: 20 }, (_, i) => (
                         <option key={i} value={i + 1}>{i + 1}</option>
@@ -114,7 +134,7 @@ export default function ShoppingListView() {
                 <select
                     value={newItemShopId || ''}
                     onChange={e => setNewItemShopId(e.target.value)}
-                    className="flex-1 px-4 py-2 border border-gray-300 rounded shadow-sm bg-white focus:outline-none focus:ring-2 focus:ring-green-300"
+                    className="w-48 px-4 py-2 border border-gray-300 rounded shadow-sm bg-white focus:outline-none focus:ring-2 focus:ring-green-300"
                 >
                     <option value="">-- Kein Shop --</option>
                     {shops.map(shop => (
@@ -123,7 +143,7 @@ export default function ShoppingListView() {
                 </select>
                 <button
                     onClick={handleAddItem}
-                    className="flex-1 min-w-[120px] px-6 py-2 bg-green-500 text-white rounded hover:bg-green-600 transition"
+                    className="min-w-[120px] px-6 py-2 bg-green-500 text-white rounded hover:bg-green-600 transition"
                 >
                     ➕ Hinzufügen
                 </button>

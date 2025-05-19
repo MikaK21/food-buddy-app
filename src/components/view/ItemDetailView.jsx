@@ -154,9 +154,32 @@ export default function ItemDetailView() {
 
     return (
         <div className="space-y-6">
+            {/* Überschrift außerhalb */}
             <h2 className="text-xl font-semibold">🧾 Produktdetails</h2>
 
-            <div className="bg-white shadow rounded p-6">
+            {/* Weißer Container mit Button und Formular */}
+            <div className="bg-white shadow rounded p-6 space-y-6">
+
+                {/* ✅ Button über gesamte Breite */}
+                <div>
+                    {editMode ? (
+                        <button
+                            onClick={handleSave}
+                            className="w-full bg-green-600 text-white py-2 rounded hover:bg-green-700"
+                        >
+                            💾 Speichern
+                        </button>
+                    ) : (
+                        <button
+                            onClick={() => setEditMode(true)}
+                            className="w-full bg-yellow-400 text-white py-2 rounded hover:bg-yellow-500"
+                        >
+                            ✏️ Bearbeiten
+                        </button>
+                    )}
+                </div>
+
+                {/* Formularfelder */}
                 <ProductFormSection
                     formData={formData}
                     onChange={handleChange}
@@ -167,24 +190,7 @@ export default function ItemDetailView() {
                     readOnly={!editMode}
                 />
             </div>
-
-            <div className="flex gap-2">
-                {editMode ? (
-                    <button
-                        onClick={handleSave}
-                        className="px-4 py-2 bg-green-600 text-white rounded hover:bg-green-700"
-                    >
-                        💾 Speichern
-                    </button>
-                ) : (
-                    <button
-                        onClick={() => setEditMode(true)}
-                        className="px-4 py-2 bg-yellow-400 text-white rounded hover:bg-yellow-500"
-                    >
-                        ✏️ Bearbeiten
-                    </button>
-                )}
-            </div>
         </div>
     );
+
 }

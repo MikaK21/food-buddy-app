@@ -1,9 +1,28 @@
+'use client';
+
+import { useState, useEffect } from 'react';
 import InventoryTableRow from './InventoryTableRow';
 
-export default function InventoryTable({ items, onSelectItem, getStoragesOfItemCommunity, onChangeStorage, onAction }) {
+export default function InventoryTable({
+                                           items,
+                                           onSelectItem,
+                                           getStoragesOfItemCommunity,
+                                           onChangeStorage,
+                                       }) {
+    const [itemList, setItemList] = useState(items);
+
+    // 🔁 Synchronisiere itemList mit externen items (Props)
+    useEffect(() => {
+        setItemList(items);
+    }, [items]);
+
+    const handleRemoveItem = (itemId) => {
+        setItemList(prev => prev.filter(item => item.id !== itemId));
+    };
+
     return (
         <div className="flex-1 overflow-auto bg-white rounded shadow mx-4">
-            {items.length > 0 ? (
+            {itemList.length > 0 ? (
                 <table className="min-w-full text-sm text-left border border-gray-300">
                     <thead className="bg-gray-100 sticky top-0 z-10">
                     <tr>
@@ -15,9 +34,8 @@ export default function InventoryTable({ items, onSelectItem, getStoragesOfItemC
                         <th className="w-[30%] px-4 py-2 text-center">Aktionen</th>
                     </tr>
                     </thead>
-
                     <tbody>
-                    {items.map((item, index) => (
+                    {itemList.map((item, index) => (
                         <InventoryTableRow
                             key={item.id}
                             item={item}
@@ -25,7 +43,7 @@ export default function InventoryTable({ items, onSelectItem, getStoragesOfItemC
                             onSelectItem={onSelectItem}
                             getStoragesOfItemCommunity={getStoragesOfItemCommunity}
                             onChangeStorage={onChangeStorage}
-                            onAction={onAction}
+                            onRemoveItem={handleRemoveItem}
                         />
                     ))}
                     </tbody>

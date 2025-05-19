@@ -94,7 +94,7 @@ export default function StoragesManageView() {
 
     return (
         <>
-            <PageTitle icon="📁">Lager verwalten</PageTitle>
+            <PageTitle icon="🛠️">Lager verwalten</PageTitle>
 
             <div className="mb-4">
                 <label className="block text-sm font-medium mb-1">Community auswählen:</label>

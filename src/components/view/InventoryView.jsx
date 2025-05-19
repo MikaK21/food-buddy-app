@@ -105,13 +105,20 @@ export default function InventoryView() {
 
     const handleAction = async (itemId, action, expiration) => {
         try {
-            console.log(`${action}: Item ${itemId} / Exp ${expiration?.expirationDate}`);
-            // await authFetch(`/api/item/${itemId}/${action}`, { method: 'POST' });
-            // reloadItems();
+            const res = await authFetch(`/api/item/${itemId}/${action}`, {
+                method: 'PUT',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ date: expiration?.expirationDate }),
+            });
+
+            if (!res.ok) throw new Error('Fehler bei der Aktion');
+
+            await reloadItems(); // ✅ Items neu laden nach Aktion
         } catch (err) {
             console.error(`Fehler bei Aktion ${action}:`, err);
         }
     };
+
 
     if (activeItem) {
         return <ItemDetailView item={activeItem} onBack={() => setActiveItem(null)} reload={() => {}} />;

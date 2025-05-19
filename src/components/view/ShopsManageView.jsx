@@ -10,8 +10,6 @@ import ConfirmDialog from '@/components/ui/ConfirmDialog';
 export default function ShopsManageView() {
     const [shops, setShops] = useState([]);
     const [newShopName, setNewShopName] = useState('');
-    const [editShopId, setEditShopId] = useState(null);
-    const [editShopName, setEditShopName] = useState('');
     const [deleteShopId, setDeleteShopId] = useState(null);
     const [showConfirm, setShowConfirm] = useState(false);
 
@@ -26,31 +24,22 @@ export default function ShopsManageView() {
         loadShops();
     }, []);
 
-    const handleSave = async (id) => {
-        const name = id ? editShopName : newShopName;
-        if (!name.trim()) return;
-
-        const url = id
-            ? `/api/shop/${id}`
-            : '/api/shop';
-
-        const method = id ? 'PUT' : 'POST';
+    const handleCreateShop = async () => {
+        if (!newShopName.trim()) return;
 
         try {
-            const res = await authFetch(url, {
-                method,
+            const res = await authFetch('/api/shop', {
+                method: 'POST',
                 headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify({ name }),
+                body: JSON.stringify({ name: newShopName }),
             });
 
             if (res.ok) {
-                setEditShopId(null);
-                setEditShopName('');
                 setNewShopName('');
                 loadShops();
             }
         } catch (err) {
-            console.error('Fehler beim Speichern:', err);
+            console.error('Fehler beim Erstellen des Shops:', err);
         }
     };
 
@@ -79,20 +68,13 @@ export default function ShopsManageView() {
                 label="Shop"
                 value={newShopName}
                 onChange={setNewShopName}
-                onSubmit={() => handleSave(null)}
+                onSubmit={handleCreateShop} // ✅ nicht mehr handleSave(null)
             />
 
             <GenericEditableList
                 entries={shops}
-                editId={editShopId}
-                editValue={editShopName}
-                onEditClick={(id, name) => {
-                    setEditShopId(id);
-                    setEditShopName(name);
-                }}
-                onEditChange={setEditShopName}
-                onSave={handleSave}
                 onDelete={confirmDelete}
+                allowEdit={false}
             />
 
             {showConfirm && (

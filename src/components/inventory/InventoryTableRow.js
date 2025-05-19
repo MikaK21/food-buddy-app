@@ -1,18 +1,28 @@
 'use client';
 
 import { useRouter } from 'next/navigation';
-import { useState } from 'react';
+import { useEffect, useState } from 'react';
 import { ChevronDown, ChevronUp } from 'lucide-react';
+import { authFetch } from '@/utils/authFetch';
 
 export default function InventoryTableRow({
                                               item,
                                               index,
                                               getStoragesOfItemCommunity,
                                               onChangeStorage,
-                                              onAction
+                                              onRemoveItem,
                                           }) {
     const router = useRouter();
     const [expanded, setExpanded] = useState(false);
+    const [expirationsState, setExpirationsState] = useState(item.expirations ?? []);
+    const [wasRemoved, setWasRemoved] = useState(false);
+
+    // 👉 Nur nach Rendern den Parent über Entfernen informieren
+    useEffect(() => {
+        if (wasRemoved && onRemoveItem) {
+            onRemoveItem(item.id);
+        }
+    }, [wasRemoved, onRemoveItem, item.id]);
 
     const getStatusColor = (status) => {
         switch (status) {
@@ -26,11 +36,46 @@ export default function InventoryTableRow({
     const formatDateGerman = (isoDateString) => {
         if (!isoDateString) return '';
         const date = new Date(isoDateString);
-        return date.toLocaleDateString('de-DE');
+        return new Intl.DateTimeFormat('de-DE', {
+            day: '2-digit',
+            month: '2-digit',
+            year: 'numeric'
+        }).format(date);
     };
 
-    const primary = item.primaryExpiration;
-    const expirations = item.expirations ?? [];
+    const handleItemAction = async (itemId, actionType, expiration) => {
+        const date = expiration?.expirationDate;
+        if (!itemId || !date) return;
+
+        try {
+            const res = await authFetch(`/api/item/${itemId}/${actionType}`, {
+                method: 'PUT',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ date }),
+            });
+
+            if (!res.ok) throw new Error(`Fehler bei Aktion: ${actionType}`);
+
+            setExpirationsState(prev => {
+                const updated = prev.map(exp =>
+                    exp.expirationDate === expiration.expirationDate
+                        ? { ...exp, amount: Math.max(0, (exp.amount || 0) - 1) }
+                        : exp
+                ).filter(exp => exp.amount > 0);
+
+                if (updated.length === 0) {
+                    setWasRemoved(true); // 💡 Nur Flag setzen, useEffect kümmert sich um Callback
+                }
+
+                return updated;
+            });
+        } catch (err) {
+            console.error(err);
+        }
+    };
+
+    const expirations = expirationsState;
+    const primary = expirations[0] || null;
     const totalAmount = expirations.reduce((sum, exp) => sum + (exp.amount || 0), 0);
     const multipleExpirations = expirations.length > 1;
 
@@ -89,13 +134,13 @@ export default function InventoryTableRow({
                     ) : (
                         <div className="flex justify-center gap-2">
                             <button
-                                onClick={() => onAction(item.id, 'consume', primary)}
+                                onClick={() => handleItemAction(item.id, 'consume', primary)}
                                 className="bg-green-500 text-white px-2 py-1 rounded hover:bg-green-600 text-sm"
                             >
                                 🍽️ Gegessen
                             </button>
                             <button
-                                onClick={() => onAction(item.id, 'discard', primary)}
+                                onClick={() => handleItemAction(item.id, 'discard', primary)}
                                 className="bg-red-500 text-white px-2 py-1 rounded hover:bg-red-700 text-sm"
                             >
                                 🗑️ Weggeworfen
@@ -106,10 +151,7 @@ export default function InventoryTableRow({
             </tr>
 
             {expanded && multipleExpirations && expirations.map((exp, i) => (
-                <tr
-                    key={i}
-                    className="text-sm border-t border-gray-200 bg-white"
-                >
+                <tr key={i} className="text-sm border-t border-gray-200 bg-white">
                     <td className="w-[20%] px-4 py-2 text-left text-gray-400 pl-6">•</td>
                     <td className="w-[15%] px-4 py-2 text-center text-gray-700">
                         {formatDateGerman(exp.expirationDate)}
@@ -122,13 +164,13 @@ export default function InventoryTableRow({
                     <td className="w-[25%] px-4 py-2 text-center">
                         <div className="flex justify-center gap-2">
                             <button
-                                onClick={() => onAction(item.id, 'consume', exp)}
+                                onClick={() => handleItemAction(item.id, 'consume', exp)}
                                 className="bg-green-500 text-white px-2 py-1 rounded hover:bg-green-600 text-sm"
                             >
                                 🍽️ Gegessen
                             </button>
                             <button
-                                onClick={() => onAction(item.id, 'discard', exp)}
+                                onClick={() => handleItemAction(item.id, 'discard', exp)}
                                 className="bg-red-500 text-white px-2 py-1 rounded hover:bg-red-700 text-sm"
                             >
                                 🗑️ Weggeworfen
